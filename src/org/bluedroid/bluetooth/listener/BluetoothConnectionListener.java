@@ -1,4 +1,4 @@
-package com.mateusfreira.bluetooth.sample;
+package org.bluedroid.bluetooth.listener;
 
 public interface BluetoothConnectionListener {
 	public void erro(Throwable e);

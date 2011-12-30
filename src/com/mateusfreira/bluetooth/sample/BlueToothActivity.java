@@ -3,6 +3,10 @@ package com.mateusfreira.bluetooth.sample;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bluedroid.bluetooth.BlueToothMananger;
+import org.bluedroid.bluetooth.listener.BlueToothSeachListener;
+import org.bluedroid.bluetooth.listener.BluetoothConnectionListener;
+
 import android.app.ListActivity;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
@@ -47,6 +51,7 @@ public class BlueToothActivity extends ListActivity implements
 	}
 
 	private void updateUiDevices() {
+		names = new ArrayList<String>();
 		for (BluetoothDevice device : devices) {
 			names.add(device.getName());
 		}

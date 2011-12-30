@@ -1,4 +1,4 @@
-package com.mateusfreira.bluetooth.sample;
+package org.bluedroid.bluetooth.exception;
 
 public class BlueToothSuportedException extends RuntimeException {
 

@@ -1,10 +1,17 @@
-package com.mateusfreira.bluetooth.sample;
+package org.bluedroid.bluetooth;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.Set;
 import java.util.UUID;
+
+import org.bluedroid.bluetooth.exception.BlueToothAleryEnabledException;
+import org.bluedroid.bluetooth.exception.BlueToothNotConnectedException;
+import org.bluedroid.bluetooth.exception.BlueToothNotEnableException;
+import org.bluedroid.bluetooth.exception.BlueToothSuportedException;
+import org.bluedroid.bluetooth.listener.BlueToothSeachListener;
+import org.bluedroid.bluetooth.listener.BluetoothConnectionListener;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -18,6 +25,7 @@ import android.content.IntentFilter;
 public class BlueToothMananger {
 	private BluetoothAdapter mBluetoothAdapter;
 	private Activity activity;
+	private BluetoothConnectionListener bluetoothConnectionListener;
 	public static final int REQUEST_ENABLE_BT = 1230;
 	public static final int TIME_SEARCH = 300;
 	private BlueToothSeachListener blueToothSeachListener;
@@ -80,7 +88,7 @@ public class BlueToothMananger {
 	/**
 	 * 
 	 * @throws BlueToothSuportedException
-	 *             , BlueToothAleryEnabledException, BlueToothNotEnableException
+	 *             , BlueToothNotEnableException
 	 * 
 	 */
 	public BlueToothMananger startSearchDevices(
@@ -91,11 +99,8 @@ public class BlueToothMananger {
 		setParedDevices();
 		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
 		activity.registerReceiver(mReceiver, filter);
-		Intent discoverableIntent = new Intent(
-				BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-		discoverableIntent.putExtra(
-				BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, TIME_SEARCH);
-		activity.startActivity(discoverableIntent);
+		mBluetoothAdapter.startDiscovery();
+
 		return this;
 	}
 
@@ -118,6 +123,7 @@ public class BlueToothMananger {
 	public BlueToothMananger conectTo(BluetoothDevice device,
 			BluetoothConnectionListener bluetoothConnectionListener, int idApp) {
 		try {
+			mBluetoothAdapter.cancelDiscovery();
 			BluetoothSocket tmp = null;
 			Method m = device.getClass().getMethod("createRfcommSocket",
 					new Class[] { int.class });
@@ -138,9 +144,31 @@ public class BlueToothMananger {
 
 	}
 
+	/**
+	 * 
+	 * @throws BlueToothNotConnectedException
+	 */
+	public BlueToothMananger disconect() {
+		verifyConnected();
+		try {
+			mmSocket.close();
+		} catch (IOException e) {
+			bluetoothConnectionListener.erro(e);
+		}
+		bluetoothConnectionListener = null;
+		return this;
+	}
+
+	private void verifyConnected() {
+		if (!isConnected()) {
+			throw new BlueToothNotConnectedException();
+		}
+	}
+
 	public BlueToothMananger conectTo(BluetoothDevice device,
 			BluetoothConnectionListener bluetoothConnectionListener, UUID uuid) {
 		try {
+			mBluetoothAdapter.cancelDiscovery();
 			mmSocket = device.createRfcommSocketToServiceRecord(uuid);
 			new BlueToothManangerConnectedThread(mmSocket,
 					bluetoothConnectionListener);
@@ -148,7 +176,10 @@ public class BlueToothMananger {
 			bluetoothConnectionListener.erro(e);
 		}
 		return this;
+	}
 
+	public boolean isConnected() {
+		return bluetoothConnectionListener != null;
 	}
 }
 

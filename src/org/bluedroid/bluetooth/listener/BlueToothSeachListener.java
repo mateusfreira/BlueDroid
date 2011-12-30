@@ -1,4 +1,4 @@
-package com.mateusfreira.bluetooth.sample;
+package org.bluedroid.bluetooth.listener;
 
 import android.bluetooth.BluetoothDevice;
 
