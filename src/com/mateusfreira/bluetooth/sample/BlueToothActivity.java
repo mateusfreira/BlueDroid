@@ -11,6 +11,7 @@ import android.app.ListActivity;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -75,7 +76,14 @@ public class BlueToothActivity extends ListActivity implements
 
 	@Override
 	public void erro(Throwable e) {
-		Toast.makeText(this, "Erro no bluetooth", Toast.LENGTH_LONG).show();
+		runOnUiThread(new Runnable() {
+
+			@Override
+			public void run() {
+				Toast.makeText(BlueToothActivity.this, "Erro no bluetooth",
+						Toast.LENGTH_LONG).show();
+			}
+		});
 
 	}
 
@@ -85,8 +93,12 @@ public class BlueToothActivity extends ListActivity implements
 
 			@Override
 			public void run() {
-				Toast.makeText(BlueToothActivity.this, new String(message),
-						Toast.LENGTH_LONG).show();
+				try {
+					Toast.makeText(BlueToothActivity.this, new String(message),
+							Toast.LENGTH_LONG).show();
+				} catch (Exception e) {
+					Log.e("Erro", "Erro", e);
+				}
 
 			}
 		});
@@ -95,8 +107,19 @@ public class BlueToothActivity extends ListActivity implements
 
 	@Override
 	public void connectionLost() {
-		Toast.makeText(this, "ConnectionLost", Toast.LENGTH_LONG).show();
+		runOnUiThread(new Runnable() {
 
+			@Override
+			public void run() {
+				Toast.makeText(BlueToothActivity.this, "ConnectionLost",
+						Toast.LENGTH_LONG).show();
+			}
+		});
+
+	}
+
+	public void onBackPressed() {
+		blueToothMananger.disconect();
 	}
 
 }

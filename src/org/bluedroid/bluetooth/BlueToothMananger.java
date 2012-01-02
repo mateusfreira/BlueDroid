@@ -24,6 +24,7 @@ import android.content.IntentFilter;
 
 public class BlueToothMananger {
 	private BluetoothAdapter mBluetoothAdapter;
+	private BlueToothManangerConnectedThread connectionThead = null;
 	private Activity activity;
 	private BluetoothConnectionListener bluetoothConnectionListener;
 	public static final int REQUEST_ENABLE_BT = 1230;
@@ -122,6 +123,7 @@ public class BlueToothMananger {
 
 	public BlueToothMananger conectTo(BluetoothDevice device,
 			BluetoothConnectionListener bluetoothConnectionListener, int idApp) {
+		this.bluetoothConnectionListener = bluetoothConnectionListener;
 		try {
 			mBluetoothAdapter.cancelDiscovery();
 			BluetoothSocket tmp = null;
@@ -130,8 +132,10 @@ public class BlueToothMananger {
 			tmp = (BluetoothSocket) m.invoke(device, idApp);
 			mmSocket = tmp;
 			mmSocket.connect();
-			new BlueToothManangerConnectedThread(mmSocket,
-					bluetoothConnectionListener).start();
+
+			connectionThead = new BlueToothManangerConnectedThread(mmSocket,
+					bluetoothConnectionListener);
+			connectionThead.start();
 		} catch (Throwable e) {
 			try {
 				mmSocket.close();
@@ -150,11 +154,7 @@ public class BlueToothMananger {
 	 */
 	public BlueToothMananger disconect() {
 		verifyConnected();
-		try {
-			mmSocket.close();
-		} catch (IOException e) {
-			bluetoothConnectionListener.erro(e);
-		}
+		connectionThead.cancel();
 		bluetoothConnectionListener = null;
 		return this;
 	}
@@ -187,6 +187,7 @@ class BlueToothManangerConnectedThread extends Thread {
 	private final BluetoothSocket mmSocket;
 	private final InputStream mmInStream;
 	private BluetoothConnectionListener bluetoothConnectionListener;
+	private boolean disconected = false;
 
 	public BlueToothManangerConnectedThread(BluetoothSocket socket,
 			BluetoothConnectionListener bluetoothConnectionListener) {
@@ -210,8 +211,10 @@ class BlueToothManangerConnectedThread extends Thread {
 				bytes = mmInStream.read(buffer);
 				bluetoothConnectionListener.messageReceived(buffer, bytes);
 			} catch (IOException e) {
-				bluetoothConnectionListener.erro(e);
-				bluetoothConnectionListener.connectionLost();
+				if (!disconected) {
+					bluetoothConnectionListener.erro(e);
+					bluetoothConnectionListener.connectionLost();
+				}
 				break;
 			}
 		}
@@ -219,6 +222,7 @@ class BlueToothManangerConnectedThread extends Thread {
 
 	public void cancel() {
 		try {
+			disconected = true;
 			mmSocket.close();
 			bluetoothConnectionListener.connectionLost();
 		} catch (IOException e) {
